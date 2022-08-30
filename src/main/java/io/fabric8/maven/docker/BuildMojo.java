@@ -10,6 +10,8 @@ import java.net.URL;
 import java.util.Date;
 import java.util.Enumeration;
 
+import java.util.ArrayList;
+
 import io.fabric8.maven.docker.access.AuthConfig;
 import io.fabric8.maven.docker.access.DockerAccessException;
 import io.fabric8.maven.docker.assembly.BuildDirs;
@@ -68,10 +70,24 @@ public class BuildMojo extends AbstractBuildSupportMojo {
         // Check for build plugins
         executeBuildPlugins();
 
+        ArrayList<Thread> threads = new ArrayList<Thread>();
+
         // Iterate over all the ImageConfigurations and process one by one
         for (ImageConfiguration imageConfig : getResolvedImages()) {
-            processImageConfig(hub, imageConfig);
+            System.out.println("HAHA2");
+            threads.add(new Thread(() -> { try { processImageConfig(hub, imageConfig); } catch (Exception e) {  } }));
+
+            // processImageConfig(hub, imageConfig);
         }
+
+        for (Thread thread : threads) { thread.start(); }
+        try {
+          for (Thread thread : threads) { thread.join(); }
+        }
+        catch (java.lang.InterruptedException e) {
+          throw new IOException(e.getMessage(), e);
+        }
+        System.out.println("LOL2");
     }
 
     protected void buildAndTag(ServiceHub hub, ImageConfiguration imageConfig)
